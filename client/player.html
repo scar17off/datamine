@@ -1,0 +1,160 @@
+<html>
+
+<head>
+	<title>DataMine</title>
+	<style>
+		body {
+			margin: 0;
+			background-color: black;
+		}
+
+		.navbar {
+			display: flex;
+			align-items: center;
+			background-color: #3642B1;
+			width: 100%;
+			height: 56px;
+			padding: 0.5rem 0 0.5rem 0;
+		}
+
+		.brand-name {
+			font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+			font-size: 20px;
+			margin-left: 10rem;
+		}
+
+		label {
+			color: white;
+		}
+
+		.center {
+			text-align: center;
+		}
+
+		button,
+		input,
+		textarea {
+			height: 30px;
+			background-color: #212529;
+			border: none;
+			border-radius: 10px;
+			color: white;
+		}
+
+		#title {
+			font-size: x-large;
+		}
+
+		.bottom {
+			position: absolute;
+			bottom: 0;
+		}
+
+		a:link {
+			color: white;
+		}
+
+		div[id^="server-"] textarea {
+			width: 850px;
+			height: 145px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="navbar">
+		<label class="brand-name">DataMine</label>
+	</div>
+	<div style="padding: 15;">
+		<label name="playerName"></label><br>
+		<label>Select server network:</label>
+		<div id="server-select"></div>
+		<div id="tab-contents"></div>
+	</div>
+	<div class="navbar bottom">
+		<label>Made by scar17off (Not server owners) - <a href="/privacy-policy">Privacy Policy</a> </label>
+	</div>
+	<script>
+		const params = location.pathname.split('/');
+		if (params.length !== 3) location.pathname = '/';
+
+		const playerName = params[params.length - 1];
+
+		const $playerName = document.querySelector('label[name="playerName"]');
+		$playerName.innerText = playerName;
+		const $tabContents = document.getElementById("tab-contents");
+
+		function objectToString(obj) {
+			if (!obj || typeof obj !== 'object') return 'None';
+
+			return Object.entries(obj).map(([key, value]) => `${key}: ${value}`).join('\n');
+		};
+
+		function parseKicks(logData) {
+			let logString = '';
+
+			for (const key in logData) {
+				if (logData.hasOwnProperty(key)) {
+					const entry = logData[key];
+					const { timeStr, kicked_by, reason } = entry;
+					logString += `${timeStr}! [${kicked_by}] ${reason}\n`;
+				};
+			};
+
+			return logString;
+		};
+
+		fetch("/api/player", {
+			headers: {
+				"x-player-name": playerName
+			}
+		}).then(async response => {
+			let info = await response.text();
+			info = JSON.parse(info);
+
+			for (const serverName in info) {
+				const server = info[serverName];
+
+				const kicks = parseKicks(server.kicks);
+				const bans = parseKicks(server.bans);
+
+				if(server.lastSession < server.lastJoined) server.lastSessionStr = "now";
+				var sessionString = `${server.lastJoinedStr} - ${server.lastSessionStr}`;
+
+				const tabbtn = document.createElement("button");
+				tabbtn.innerText = serverName;
+				tabbtn.onclick = () => {
+					document.querySelectorAll('#tab-contents > *').forEach(element => element.hidden = true);
+					document.getElementById("server-" + serverName).hidden = false;
+				};
+
+				document.getElementById("server-select").appendChild(tabbtn);
+
+				const tab_content = document.createElement("div");
+				tab_content.id = "server-" + serverName;
+				if($tabContents.childElementCount > 0) tab_content.hidden = true;
+
+				tab_content.innerHTML = `<label>Clan: ${typeof server.clan !== "undefined" ? server.clan : "N/A"}</label><br>
+<label>Donate: ${typeof server.donate !== "undefined" ? server.donate : "N/A"}</label><br>
+<label>Last session: ${sessionString}</label><br>
+
+<label>Message logs:</label>
+<br>
+<textarea readonly>${objectToString(server.messages)}</textarea><br>
+
+<label>Kicks (${kicks.split("\n").length - 1}):</label>
+<br>
+<textarea readonly>${kicks}</textarea><br>
+
+<label>Bans (${bans.split("\n").length - 1}):</label>
+<br>
+<textarea readonly>${bans}</textarea>
+`;
+
+				$tabContents.appendChild(tab_content);
+			};
+		});
+	</script>
+</body>
+
+</html>

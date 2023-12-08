@@ -1,0 +1,80 @@
+<html>
+
+<head>
+	<title>DataMine</title>
+	<style>
+		body {
+			margin: 0;
+			background-color: black;
+		}
+		.navbar {
+			display: flex;
+			align-items: center;
+			background-color: #3642B1;
+			width: 100%;
+			height: 56px;
+			padding: 0.5rem 0 0.5rem 0;
+		}
+		.brand-name {
+			font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+			font-size: 20px;
+			margin-left: 10rem;
+		}
+		label {
+			color: white;
+		}
+		.center {
+			text-align: center;
+		}
+		button, input {
+			height: 30px;
+			background-color: #212529;
+			border: none;
+			border-radius: 10px;
+			color: white;
+		}
+		#title {
+			font-size: x-large;
+		}
+		.bottom {
+			position: absolute;
+    		bottom: 0;
+		}
+		a:link {
+			color: white;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="navbar">
+		<label class="brand-name">DataMine</label>
+	</div>
+	<div>
+		<div class="center">
+			<label id="title">Enter player name to check. Monitoring %p players, %s servers and %n server networks.</label>
+			<br>
+			<input id="playername" style="width: 500px"></input>
+			<button onclick="openProfile()">Open profile</button>
+		</div>
+	</div>
+	<div class="navbar bottom">
+		<label>Made by scar17off (Not server owners) - <a href="/privacy-policy">Privacy Policy</a> </label>
+	</div>
+	<script>
+		const $ = document.getElementById("title");
+		const $playerName = document.getElementById("playername");
+
+		fetch("/api/count")
+			.then(async response => {
+				const datasaved = await response.json();
+				$.innerText = $.innerText.replace("%p", datasaved.players).replace("%s", datasaved.servers.reduce((acc, num) => acc + num, 0)).replace("%n", datasaved.networks);
+			});
+
+		function openProfile() {
+			if($playerName.value.trim() !== '') location.pathname = "/player/" + $playerName.value;
+		};
+	</script>
+</body>
+
+</html>
